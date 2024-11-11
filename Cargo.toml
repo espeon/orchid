@@ -1,0 +1,28 @@
+[package]
+name = "orchid"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7.7", features = ["ws", "macros", "http2"] }
+axum-extra = { version = "0.9.4", features = ["typed-header"] }
+futures = "0.3"
+futures-util = { version = "0.3", default-features = false, features = [
+    "sink",
+    "std",
+] }
+headers = "0.4"
+tokio = { version = "1.0", features = ["full"] }
+tower-http = { version = "0.6.1", features = ["fs", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+turbosql = "0.11.0"
+twitch-irc = { git = "https://github.com/robotty/twitch-irc-rs", branch = "master", features = [
+    "with-serde",
+] }
+thiserror = "2.0.3"
+uuid = { version = "1.11.0", features = ["v8", "v4"] }
+reqwest = { version = "0.12", features = ["json"] }
+async-trait = "0.1.83"
