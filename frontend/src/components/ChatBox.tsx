@@ -1,37 +1,32 @@
 // src/components/ChatBox.tsx
 import { MessageCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
-import randomMessages from "../lib/exampleMsgs";
-import { useChatStore } from "@/stores/chatStore";
+import ChatMessage from "./ChatMessage";
+import { useLayoutStore } from "@/stores/layoutItemsStore";
 
 const ChatBox = () => {
-  const { messages, addMessage, initializeMessages } = useChatStore();
+  const { messages } = useLayoutStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Initialize messages on mount
-  useEffect(() => {
-    initializeMessages();
-  }, [initializeMessages]);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     let newMessage =
+  //       randomMessages[Math.floor(Math.random() * randomMessages.length)];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      let newMessage =
-        randomMessages[Math.floor(Math.random() * randomMessages.length)];
+  //     // if the message is the same as the last one, try again
+  //     while (
+  //       messages.length > 0 &&
+  //       messages[messages.length - 1].message === newMessage.message
+  //     ) {
+  //       newMessage =
+  //         randomMessages[Math.floor(Math.random() * randomMessages.length)];
+  //     }
 
-      // if the message is the same as the last one, try again
-      while (
-        messages.length > 0 &&
-        messages[messages.length - 1].message === newMessage.message
-      ) {
-        newMessage =
-          randomMessages[Math.floor(Math.random() * randomMessages.length)];
-      }
+  //     addMessage(newMessage);
+  //   }, 300);
 
-      addMessage(newMessage);
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [messages, addMessage]);
+  //   return () => clearInterval(interval);
+  // }, [messages, addMessage]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -55,12 +50,14 @@ const ChatBox = () => {
         }}
         ref={scrollRef}
       >
-        <div className="overflow-y-auto space-y-2 pb-8 px-1">
+        <div className="overflow-y-visible hide-scrollbar space-y-2 pb-8 px-1 mr-1">
           <div className="h-10" />
           {messages.map((m, i) => (
-            <div className="text-sm" key={m.user + m.message + i}>
-              <span className="text-purple-400 font-medium">{m.user}:</span>
-              <span className="text-white/90 ml-2">{m.message}</span>
+            <div
+              className="text-sm text-pretty break-words "
+              key={m.user + m.message + i}
+            >
+              <ChatMessage message={m} />
             </div>
           ))}
         </div>

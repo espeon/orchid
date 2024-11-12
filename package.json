@@ -1,25 +1,13 @@
 {
-  "name": "my-monorepo",
+  "name": "orchid",
   "private": true,
   "scripts": {
-    "dev": "cd frontend && vite",
-    "build": "cd frontend && vite build",
-    "lint": "cd frontend && eslint .",
-    "preview": "cd frontend && vite preview"
+    "dev": "cd frontend && bun dev",
+    "build": "cd frontend && bun run build",
+    "lint": "cd frontend && bun lint",
+    "preview": "cd frontend && bun preview"
   },
   "workspaces": [
     "*"
-  ],
-  "dependencies": {
-    "@tanstack/react-router": "^1.77.6",
-    "@types/node": "^22.8.2",
-    "@types/ws": "^8.5.12",
-    "vite-tsconfig-paths": "^5.0.1",
-    "ws": "^8.18.0",
-    "zustand": "^5.0.0"
-  },
-  "devDependencies": {
-    "@tanstack/router-devtools": "^1.77.6",
-    "@tanstack/router-plugin": "^1.76.4"
-  }
+  ]
 }

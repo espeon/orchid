@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 use crate::{
     err::{OrchidError, OrchidResult},
-    twitch::chat_manager::SubscriptionManager,
+    twitch::chat::manager::SubscriptionManager,
 };
 
 pub struct WebsocketInfo {

@@ -2,6 +2,7 @@ import { BottomLayoutItems } from "@/lib/bottomBoxTypes";
 import { LayoutUpdateMessage } from "@/lib/layoutUpdateTypes";
 import { useEffect } from "react";
 import { create } from "zustand";
+import { TwitchChatMessage, useChatStore } from "./chatStore";
 
 interface LayoutStoreState {
   layoutItems: BottomLayoutItems[];
@@ -9,6 +10,8 @@ interface LayoutStoreState {
   updateLayoutItems: (message: LayoutUpdateMessage) => void;
   wsConnection: WebSocket | null;
   initWebSocket: () => void;
+  messages: TwitchChatMessage[];
+  addMessage: (message: TwitchChatMessage) => void;
 }
 
 export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
@@ -59,7 +62,6 @@ export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
   wsConnection: null,
   initWebSocket: () => {
     if (!get().wsConnection) {
-      // Check if a WebSocket connection already exists
       const ws = new WebSocket("ws://localhost:3000/ws");
 
       ws.addEventListener("open", () => {
@@ -67,18 +69,27 @@ export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
       });
 
       ws.addEventListener("message", (event) => {
-        let data = null;
-        let dataType = "string";
         try {
           if (event.data.startsWith("{")) {
-            data = JSON.parse(event.data);
-            dataType = "json";
-            // TODO: better handle incoming data portions
-            set({ layoutItems: data.layout_items });
-          } else {
-            data = event.data;
+            const data: TwitchChatMessage = JSON.parse(event.data);
+
+            if (
+              data.msgType === "PRIVMSG" &&
+              data.user?.userName &&
+              data.message
+            ) {
+              console.log(`${data.user.userName}: ${data.message}`);
+              set((state) => {
+                const updatedMessages = [...state.messages, data];
+                return {
+                  messages:
+                    updatedMessages.length > 30
+                      ? updatedMessages.slice(1)
+                      : updatedMessages,
+                };
+              });
+            }
           }
-          console.log("Received", dataType, "data:", data);
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
         }
@@ -86,7 +97,7 @@ export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
 
       ws.addEventListener("close", () => {
         console.warn("WebSocket connection closed. Attempting to reconnect...");
-        set({ wsConnection: null }); // Reset connection in store
+        set({ wsConnection: null });
       });
 
       ws.addEventListener("error", (error) => {
@@ -96,6 +107,17 @@ export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
       set({ wsConnection: ws });
     }
   },
+  messages: [],
+  addMessage: (message) =>
+    set((state) => {
+      const updatedMessages = [...state.messages, message];
+      return {
+        messages:
+          updatedMessages.length > 30
+            ? updatedMessages.slice(1)
+            : updatedMessages,
+      };
+    }),
 }));
 
 // Custom hook to initialize the WebSocket connection

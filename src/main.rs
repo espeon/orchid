@@ -27,7 +27,7 @@ pub mod ws;
 #[derive(Clone)]
 pub struct AppState {
     ws_collection: Arc<Mutex<WebsocketCollection>>,
-    sub_manager: Arc<Mutex<twitch::chat_manager::SubscriptionManager>>,
+    sub_manager: Arc<Mutex<twitch::chat::manager::SubscriptionManager>>,
 }
 
 #[tokio::main]
@@ -44,7 +44,7 @@ async fn main() {
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
 
     // setup sub manager
-    let sub_manager = twitch::chat_manager::SubscriptionManager::new();
+    let sub_manager = twitch::chat::manager::SubscriptionManager::new();
 
     let ws_collection = Arc::new(Mutex::new(WebsocketCollection::new(sub_manager.clone())));
 
