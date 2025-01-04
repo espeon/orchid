@@ -2,12 +2,12 @@
   "name": "orchid",
   "private": true,
   "scripts": {
-    "dev": "cd frontend && bun dev",
-    "build": "cd frontend && bun run build",
-    "lint": "cd frontend && bun lint",
-    "preview": "cd frontend && bun preview"
+    "dev": "cd orchid-web && bun run dev",
+    "build": "cd orchid-web && bun run build",
+    "preview": "cd orchid-web && bun run preview"
   },
-  "workspaces": [
-    "*"
-  ]
+  "packageManager": "pnpm@9.15.2",
+  "devDependencies": {
+    "turbo": "^2.2.3"
+  }
 }

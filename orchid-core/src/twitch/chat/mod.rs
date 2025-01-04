@@ -15,12 +15,15 @@ use crate::ws::{WebsocketCollection, WsMessage};
 
 use manager::SubscriptionManager;
 
+use super::emote::EmoteHandler;
+
 pub mod manager;
 pub mod message;
 
 pub async fn setup_twitch_chat(
     state: Arc<Mutex<WebsocketCollection>>,
     sub_manager: Arc<Mutex<SubscriptionManager>>,
+    emote_manager: Arc<Mutex<EmoteHandler>>,
 ) {
     let chat = TwitchChatClient::<StaticLoginCredentials>::new();
     let (chat, mut receiver) = chat.get_pair().await;
@@ -39,7 +42,18 @@ pub async fn setup_twitch_chat(
 
                     // format message in our own format if it is a privmsg
                     match TwitchChatMessage::try_from(msg.to_owned()) {
-                        Ok(msg) => {
+                        Ok(mut msg) => {
+                            // postprocess message with emote parsing
+                            {
+                                let mut emote_manager = emote_manager.lock().await;
+                                msg.message = emote_manager
+                                    .process_message_with_emotes(
+                                        &msg.message,
+                                        msg.user.user_name.as_str(),
+                                        msg.channel.as_str(),
+                                    )
+                                    .await;
+                            }
                             let json = serde_json::to_string(&msg).unwrap();
                             send_twitchchat_msg_to_subscribers(state.clone(), subscribers, json)
                                 .await;

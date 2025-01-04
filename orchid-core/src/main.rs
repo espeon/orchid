@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
     routing::{any, get},
-    Router,
+    Json, Router,
 };
 use axum_extra::TypedHeader;
 use serde::Deserialize;
@@ -14,7 +14,10 @@ use tower_http::{
     trace::{DefaultMakeSpan, TraceLayer},
 };
 use tracing::debug;
-use twitch::chat::setup_twitch_chat;
+use twitch::{
+    chat::setup_twitch_chat,
+    emote::{ffz::FrankerFaceZEmoteManager, EmoteHandler},
+};
 use ws::{WebsocketCollection, WebsocketHandler, WsMessage};
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -48,11 +51,16 @@ async fn main() {
 
     let ws_collection = Arc::new(Mutex::new(WebsocketCollection::new(sub_manager.clone())));
 
+    // set up emote manager
+    let mut em = EmoteHandler::new();
+    em.add_manager(Box::new(FrankerFaceZEmoteManager::new()));
+    let emote_manager = Arc::new(Mutex::new(em));
+
     // Setup twitch chat
     let cloned_ws_collection = ws_collection.clone();
     let cloned_sub_manager = sub_manager.clone();
     let twitch_chat_task = tokio::spawn(async move {
-        setup_twitch_chat(ws_collection, cloned_sub_manager).await;
+        setup_twitch_chat(ws_collection, cloned_sub_manager, emote_manager).await;
     });
 
     let state = AppState {
@@ -68,6 +76,10 @@ async fn main() {
         .route("/ws", any(handle_ws))
         .route("/broadcast", get(broadcast_message))
         .route("/global_sub", get(global_sub))
+        .route("/global_unsub", get(global_unsub))
+        .route("/global_subs", get(get_global_subs))
+        // host static files in assets folder!
+        .nest_service("/", ServeDir::new("../orchid-web/dist"))
         // logging so we can see whats going on
         .layer(
             TraceLayer::new_for_http()
@@ -137,4 +149,20 @@ async fn global_sub(
         .await
         .unwrap();
     StatusCode::OK
+}
+
+async fn global_unsub(
+    Query(query): Query<GlobalSubscriptionQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let mut mgr = state.sub_manager.lock().await;
+    mgr.unsubscribe(&query.username, "global").await;
+    StatusCode::OK
+}
+
+async fn get_global_subs(State(state): State<AppState>) -> impl IntoResponse {
+    let mgr = state.sub_manager.lock().await;
+    let subs = mgr.get_client_subscriptions("global");
+    let subs: Vec<String> = subs.iter().map(|s| s.to_string()).collect();
+    Json(subs)
 }

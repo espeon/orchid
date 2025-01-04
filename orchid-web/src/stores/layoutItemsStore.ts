@@ -3,12 +3,13 @@ import { LayoutUpdateMessage } from "@/lib/layoutUpdateTypes";
 import { useEffect } from "react";
 import { create } from "zustand";
 import { TwitchChatMessage, useChatStore } from "./chatStore";
+import { WebSocketService } from "./webSocketSvc";
 
 interface LayoutStoreState {
   layoutItems: BottomLayoutItems[];
   setLayoutItems: (items: BottomLayoutItems[]) => void;
   updateLayoutItems: (message: LayoutUpdateMessage) => void;
-  wsConnection: WebSocket | null;
+  wsService: WebSocketService | null;
   initWebSocket: () => void;
   messages: TwitchChatMessage[];
   addMessage: (message: TwitchChatMessage) => void;
@@ -59,52 +60,24 @@ export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
       return {};
     });
   },
-  wsConnection: null,
+  wsService: null,
   initWebSocket: () => {
-    if (!get().wsConnection) {
-      const ws = new WebSocket("ws://localhost:3000/ws");
+    if (!get().wsService) {
+      const messageHandler = (message: TwitchChatMessage) => {
+        set((state) => {
+          const updatedMessages = [...state.messages, message];
+          return {
+            messages:
+              updatedMessages.length > 30
+                ? updatedMessages.slice(1)
+                : updatedMessages,
+          };
+        });
+      };
 
-      ws.addEventListener("open", () => {
-        console.log("WebSocket connection established");
-      });
-
-      ws.addEventListener("message", (event) => {
-        try {
-          if (event.data.startsWith("{")) {
-            const data: TwitchChatMessage = JSON.parse(event.data);
-
-            if (
-              data.msgType === "PRIVMSG" &&
-              data.user?.userName &&
-              data.message
-            ) {
-              console.log(`${data.user.userName}: ${data.message}`);
-              set((state) => {
-                const updatedMessages = [...state.messages, data];
-                return {
-                  messages:
-                    updatedMessages.length > 30
-                      ? updatedMessages.slice(1)
-                      : updatedMessages,
-                };
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      });
-
-      ws.addEventListener("close", () => {
-        console.warn("WebSocket connection closed. Attempting to reconnect...");
-        set({ wsConnection: null });
-      });
-
-      ws.addEventListener("error", (error) => {
-        console.error("WebSocket error:", error);
-      });
-
-      set({ wsConnection: ws });
+      const wsService = new WebSocketService(messageHandler);
+      wsService.connect();
+      set({ wsService });
     }
   },
   messages: [],
@@ -122,10 +95,13 @@ export const useLayoutStore = create<LayoutStoreState>()((set, get) => ({
 
 // Custom hook to initialize the WebSocket connection
 export const useInitializeWebSocket = () => {
-  const initWebSocket = useLayoutStore((state) => state.initWebSocket);
+  const { initWebSocket, wsService } = useLayoutStore();
 
   // useEffect to run the WebSocket initializer once on mount
   useEffect(() => {
     initWebSocket();
-  }, [initWebSocket]);
+    return () => {
+      wsService?.disconnect();
+    };
+  }, [initWebSocket, wsService]);
 };

@@ -31,6 +31,19 @@ impl EmoteHandler {
     pub fn new() -> Self {
         Self { managers: vec![] }
     }
+    pub fn add_manager(&mut self, manager: Box<dyn EmoteManager>) {
+        self.managers.push(manager);
+    }
+
+    // Get emote from managers
+    async fn get_emote(&mut self, user_name: &str, channel_name: &str, id: &str) -> Option<Emote> {
+        for manager in self.managers.iter_mut() {
+            if let Some(emote) = manager.get_emote(user_name, channel_name, id).await {
+                return Some(emote);
+            }
+        }
+        None
+    }
 
     // Replace detected emote names with image tags
     // <!:id:url:effect:overlay>
@@ -54,6 +67,24 @@ impl EmoteHandler {
             new_message = new_message.replace(emote.0, &replacement(emote.1));
         }
         new_message
+    }
+    /// Process a message with emotes, using the emote managers provided.
+    pub async fn process_message_with_emotes(
+        &mut self,
+        message: &str,
+        user_name: &str,
+        channel_name: &str,
+    ) -> String {
+        let mut found_emotes = HashMap::new();
+        for manager in self.managers.iter_mut() {
+            // have to process each word :(
+            for word in message.split_whitespace() {
+                if let Some(emote) = manager.get_emote(user_name, channel_name, word).await {
+                    found_emotes.insert(word.to_string(), emote);
+                }
+            }
+        }
+        self.replace_emotes(message, &found_emotes).await
     }
 }
 

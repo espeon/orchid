@@ -8,7 +8,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use serde::Serialize;
 
-struct FrankerFaceZEmoteManager {
+pub struct FrankerFaceZEmoteManager {
     // Emote caches
     /// Set cache
     set: HashMap<String, Vec<Emote>>,
@@ -48,7 +48,6 @@ impl FrankerFaceZEmoteManager {
             self.set.insert(set.0, emotes);
         }
     }
-    /// Fetches the allowed emote sets for a user.
     async fn fetch_user_sets(&mut self, user: String) -> Result<(), Box<dyn std::error::Error>> {
         let response = self
             .client
@@ -127,6 +126,7 @@ impl EmoteManager for FrankerFaceZEmoteManager {
         Ok(())
     }
 
+    /// Fetches the allowed emote sets for a user. Mutable because we may add new sets.
     async fn get_emote(&mut self, user_name: &str, channel_name: &str, id: &str) -> Option<Emote> {
         // check global emotes
         if let Some(channel) = self.emotes.get("@global") {

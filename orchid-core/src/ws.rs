@@ -47,6 +47,14 @@ impl WebsocketCollection {
         client_id: &str,
         ws: Arc<Option<Mutex<WebsocketState>>>,
     ) {
+        debug!(
+            "Adding new handler - username: {}, client_id: {}",
+            username, client_id
+        );
+        debug!(
+            "Current number of connections before add: {}",
+            self.ws.len()
+        );
         self.ws.insert(client_id.to_string(), ws);
         self.users
             .entry(username.to_string())
@@ -55,6 +63,7 @@ impl WebsocketCollection {
                 username: username.to_string(),
                 client_id: client_id.to_string(),
             });
+        debug!("Current number of connections after add: {}", self.ws.len());
     }
 
     async fn send_message(
@@ -81,8 +90,13 @@ impl WebsocketCollection {
     }
 
     pub async fn broadcast_message(&self, message: WsMessage) -> OrchidResult<()> {
-        for ws in self.ws.iter() {
-            self.send_message(ws.1.as_ref(), message.clone()).await?;
+        debug!("Broadcasting message to {} clients", self.ws.len());
+        for (client_id, ws) in self.ws.iter() {
+            debug!("Attempting to send to client: {}", client_id);
+            match self.send_message(ws.as_ref(), message.clone()).await {
+                Ok(_) => debug!("Successfully sent to client: {}", client_id),
+                Err(e) => error!("Failed to send to client {}: {:?}", client_id, e),
+            }
         }
         Ok(())
     }
@@ -204,8 +218,7 @@ impl WebsocketHandler {
         let state = Arc::new(Some(Mutex::new(WebsocketState { tx })));
 
         // create a random uid for the client
-        let buf: [u8; 16] = *b"abcdefghiklm1234";
-        let client_id = Uuid::new_v8(buf);
+        let client_id = Uuid::new_v4();
 
         debug!(
             "Initializing websocket for {} - id: {}",

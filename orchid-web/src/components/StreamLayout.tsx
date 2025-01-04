@@ -20,17 +20,17 @@ const StreamLayout = () => {
               </div>
             </div>
           </div>
-          <BottomBox>
+          {/* <BottomBox>
             <PartySelector />
             <div className="flex-1" />
             <BadgeCounter />
-          </BottomBox>
+          </BottomBox> */}
         </div>
 
         {/* Right Side Elements */}
         <div className="col-span-2 space-y-3 flex flex-col max-w-full h-full">
           <ChatBox />
-          <RecentEvents />
+          {/* <RecentEvents /> */}
           <VideoCapture />
         </div>
       </div>

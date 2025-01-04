@@ -37,13 +37,13 @@ const ChatBox = () => {
   return (
     <div className="bg-black/40 rounded-xl backdrop-blur-sm border border-white/10 p-4 h-full max-h-full flex flex-col">
       <div className="fixed">
-        <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center space-x-2 mb-4 bg-black/40 shadow-lg rounded-xl backdrop-blur-sm py-1 px-2">
           <MessageCircle className="w-5 h-5 text-purple-300" />
           <h3 className="text-white font-semibold">Live Chat</h3>
         </div>
       </div>
       <div
-        className="overflow-y-auto h-min min-h-full max-h-full fixed"
+        className="overflow-y-auto hide-scrollbar h-min min-h-full max-h-full fixed pt-16"
         style={{
           maskImage: `linear-gradient(to bottom, transparent 8%, black 40%)`,
           maskComposite: "intersect",

@@ -1,6 +1,5 @@
 // src/store/chatStore.ts
 import { create } from "zustand";
-import randomMessages from "../lib/exampleMsgs";
 
 export interface TwitchChatMessage {
   msgType: string;
