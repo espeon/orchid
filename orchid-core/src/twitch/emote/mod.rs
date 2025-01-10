@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 pub mod ffz;
+pub mod firstparty;
 
 /// Represents an Twitch emote
 #[derive(Debug, Clone, Deserialize, Serialize)]

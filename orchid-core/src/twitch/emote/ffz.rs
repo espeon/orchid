@@ -98,6 +98,12 @@ impl FrankerFaceZEmoteManager {
     }
 }
 
+impl Default for FrankerFaceZEmoteManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl EmoteManager for FrankerFaceZEmoteManager {
     async fn fetch(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
